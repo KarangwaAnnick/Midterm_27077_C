@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecBooking - Healthcare Scheduling Portal</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Auth Wrapper -->
+    <div class="auth-wrapper">
+        <div class="auth-container animate-fadeIn">
+            
+            <!-- Form Side -->
+            <div class="auth-form-container">
+                
+                <!-- Login Form -->
+                <div id="login-section">
+                    <h2>Welcome back</h2>
+                    <p class="subtitle">Sign in to access your account</p>
+                    
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="material-symbols-outlined input-icon">mail</span>
+                                <input type="email" class="form-input" id="login-email" placeholder="you@example.com" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="material-symbols-outlined input-icon">lock</span>
+                                <input type="password" class="form-input has-right-icon" id="login-password" placeholder="••••••••" required>
+                                <span class="material-symbols-outlined input-icon-right" id="toggle-login-password">visibility</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-6">
+                            <a href="#" class="text-primary text-sm font-semibold">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-full">
+                            Sign In
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </form>
+                    
+                    <p class="auth-footer">
+                        Don't have an account? <a href="#" id="show-signup">Create one</a>
+                    </p>
+                </div>
+                
+                <!-- Signup Form -->
+                <div id="signup-section" class="hidden">
+                    <h2>Create Account</h2>
+                    <p class="subtitle">Join SpecBooking to manage your healthcare</p>
+                    
+                    <!-- Role Toggle -->
+                    <div class="role-toggle mb-6">
+                        <button type="button" class="toggle-option active" data-role="PATIENT">
+                            <span class="material-symbols-outlined">person</span>
+                            Patient
+                        </button>
+                        <button type="button" class="toggle-option" data-role="DOCTOR">
+                            <span class="material-symbols-outlined">stethoscope</span>
+                            Doctor
+                        </button>
+                    </div>
+                    
+                    <form id="signup-form">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-input" id="signup-name" placeholder="John Doe" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-input" id="signup-phone" placeholder="+250 7XX XXX XXX" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-input" id="signup-email" placeholder="you@example.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="material-symbols-outlined input-icon">lock</span>
+                                <input type="password" class="form-input has-right-icon" id="signup-password" placeholder="Create a strong password" required>
+                                <span class="material-symbols-outlined input-icon-right" id="toggle-signup-password">visibility</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Fields - Cascading Dropdowns -->
+                        <p class="form-section-title">Location Information</p>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Province</label>
+                                <select class="form-select" id="signup-province" required>
+                                    <option value="">Loading...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">District</label>
+                                <select class="form-select" id="signup-district" required disabled>
+                                    <option value="">Select Province first</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Sector</label>
+                                <select class="form-select" id="signup-sector" required disabled>
+                                    <option value="">Select District first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cell</label>
+                                <select class="form-select" id="signup-cell" required disabled>
+                                    <option value="">Select Sector first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Village</label>
+                                <select class="form-select" id="signup-village" required disabled>
+                                    <option value="">Select Cell first</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor Fields (only shown for doctors) -->
+                        <div id="doctor-fields" class="hidden">
+                            <p class="form-section-title">Professional Information</p>
+                            <div class="form-group">
+                                <label class="form-label">Specialization</label>
+                                <select class="form-select" id="signup-specialization">
+                                    <option value="">Select Specialization</option>
+                                    <option value="General Practitioner">General Practitioner</option>
+                                    <option value="Cardiologist">Cardiologist</option>
+                                    <option value="Dermatologist">Dermatologist</option>
+                                    <option value="Neurologist">Neurologist</option>
+                                    <option value="Pediatrician">Pediatrician</option>
+                                    <option value="Orthopedic">Orthopedic</option>
+                                    <option value="Psychiatrist">Psychiatrist</option>
+                                    <option value="Gynecologist">Gynecologist</option>
+                                    <option value="Ophthalmologist">Ophthalmologist</option>
+                                    <option value="ENT Specialist">ENT Specialist</option>
+                                    <option value="Surgeon">Surgeon</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Experience (Years)</label>
+                                    <input type="number" class="form-input" id="signup-experience" placeholder="5" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hospital Name</label>
+                                    <input type="text" class="form-input" id="signup-hospital" placeholder="King Faisal Hospital">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-full mt-4">
+                            Create Account
+                            <span class="material-symbols-outlined">person_add</span>
+                        </button>
+                    </form>
+                    
+                    <p class="auth-footer">
+                        Already have an account? <a href="#" id="show-login">Sign in</a>
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- API Script -->
+    <script src="js/api.js"></script>
+    
+    <!-- Page Script -->
+    <script>
+        let selectedRole = 'PATIENT';
+        let allLocations = [];
+        let selectedLocationId = null;
+        
+        // Load locations from database
+        async function loadLocations() {
+            try {
+                allLocations = await api.getLocations();
+                console.log('Loaded locations:', allLocations.length);
+                populateProvinces();
+            } catch (error) {
+                console.error('Error loading locations:', error);
+                const provinceSelect = document.getElementById('signup-province');
+                provinceSelect.innerHTML = '<option value="">No locations available - Contact admin</option>';
+            }
+        }
+        
+        // Populate provinces dropdown
+        function populateProvinces() {
+            const provinceSelect = document.getElementById('signup-province');
+            const provinces = [...new Set(allLocations.map(loc => loc.province))].sort();
+            
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+            provinces.forEach(province => {
+                const option = document.createElement('option');
+                option.value = province;
+                option.textContent = province;
+                provinceSelect.appendChild(option);
+            });
+            
+            if (provinces.length === 0) {
+                provinceSelect.innerHTML = '<option value="">No provinces available</option>';
+            }
+        }
+        
+        // Province change handler - populate districts
+        document.getElementById('signup-province').addEventListener('change', function() {
+            const selectedProvince = this.value;
+            const districtSelect = document.getElementById('signup-district');
+            const sectorSelect = document.getElementById('signup-sector');
+            const cellSelect = document.getElementById('signup-cell');
+            const villageSelect = document.getElementById('signup-village');
+            
+            // Reset downstream selects
+            sectorSelect.innerHTML = '<option value="">Select District first</option>';
+            sectorSelect.disabled = true;
+            cellSelect.innerHTML = '<option value="">Select Sector first</option>';
+            cellSelect.disabled = true;
+            villageSelect.innerHTML = '<option value="">Select Cell first</option>';
+            villageSelect.disabled = true;
+            selectedLocationId = null;
+            
+            if (!selectedProvince) {
+                districtSelect.innerHTML = '<option value="">Select Province first</option>';
+                districtSelect.disabled = true;
+                return;
+            }
+            
+            const districts = [...new Set(
+                allLocations
+                    .filter(loc => loc.province === selectedProvince)
+                    .map(loc => loc.district)
+            )].sort();
+            
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+            districtSelect.disabled = false;
+        });
+        
+        // District change handler - populate sectors
+        document.getElementById('signup-district').addEventListener('change', function() {
+            const selectedProvince = document.getElementById('signup-province').value;
+            const selectedDistrict = this.value;
+            const sectorSelect = document.getElementById('signup-sector');
+            const cellSelect = document.getElementById('signup-cell');
+            const villageSelect = document.getElementById('signup-village');
+            
+            // Reset downstream selects
+            cellSelect.innerHTML = '<option value="">Select Sector first</option>';
+            cellSelect.disabled = true;
+            villageSelect.innerHTML = '<option value="">Select Cell first</option>';
+            villageSelect.disabled = true;
+            selectedLocationId = null;
+            
+            if (!selectedDistrict) {
+                sectorSelect.innerHTML = '<option value="">Select District first</option>';
+                sectorSelect.disabled = true;
+                return;
+            }
+            
+            const sectors = [...new Set(
+                allLocations
+                    .filter(loc => loc.province === selectedProvince && loc.district === selectedDistrict)
+                    .map(loc => loc.sector)
+            )].sort();
+            
+            sectorSelect.innerHTML = '<option value="">Select Sector</option>';
+            sectors.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector;
+                option.textContent = sector;
+                sectorSelect.appendChild(option);
+            });
+            sectorSelect.disabled = false;
+        });
+        
+        // Sector change handler - populate cells
+        document.getElementById('signup-sector').addEventListener('change', function() {
+            const selectedProvince = document.getElementById('signup-province').value;
+            const selectedDistrict = document.getElementById('signup-district').value;
+            const selectedSector = this.value;
+            const cellSelect = document.getElementById('signup-cell');
+            const villageSelect = document.getElementById('signup-village');
+            
+            // Reset downstream selects
+            villageSelect.innerHTML = '<option value="">Select Cell first</option>';
+            villageSelect.disabled = true;
+            selectedLocationId = null;
+            
+            if (!selectedSector) {
+                cellSelect.innerHTML = '<option value="">Select Sector first</option>';
+                cellSelect.disabled = true;
+                return;
+            }
+            
+            const cells = [...new Set(
+                allLocations
+                    .filter(loc => loc.province === selectedProvince && 
+                                   loc.district === selectedDistrict && 
+                                   loc.sector === selectedSector)
+                    .map(loc => loc.cell)
+            )].sort();
+            
+            cellSelect.innerHTML = '<option value="">Select Cell</option>';
+            cells.forEach(cell => {
+                const option = document.createElement('option');
+                option.value = cell;
+                option.textContent = cell;
+                cellSelect.appendChild(option);
+            });
+            cellSelect.disabled = false;
+        });
+        
+        // Cell change handler - populate villages
+        document.getElementById('signup-cell').addEventListener('change', function() {
+            const selectedProvince = document.getElementById('signup-province').value;
+            const selectedDistrict = document.getElementById('signup-district').value;
+            const selectedSector = document.getElementById('signup-sector').value;
+            const selectedCell = this.value;
+            const villageSelect = document.getElementById('signup-village');
+            
+            selectedLocationId = null;
+            
+            if (!selectedCell) {
+                villageSelect.innerHTML = '<option value="">Select Cell first</option>';
+                villageSelect.disabled = true;
+                return;
+            }
+            
+            const villages = [...new Set(
+                allLocations
+                    .filter(loc => loc.province === selectedProvince && 
+                                   loc.district === selectedDistrict && 
+                                   loc.sector === selectedSector &&
+                                   loc.cell === selectedCell)
+                    .map(loc => loc.village)
+            )].sort();
+            
+            villageSelect.innerHTML = '<option value="">Select Village</option>';
+            villages.forEach(village => {
+                const option = document.createElement('option');
+                option.value = village;
+                option.textContent = village;
+                villageSelect.appendChild(option);
+            });
+            villageSelect.disabled = false;
+        });
+        
+        // Village change handler - find location ID
+        document.getElementById('signup-village').addEventListener('change', function() {
+            const selectedProvince = document.getElementById('signup-province').value;
+            const selectedDistrict = document.getElementById('signup-district').value;
+            const selectedSector = document.getElementById('signup-sector').value;
+            const selectedCell = document.getElementById('signup-cell').value;
+            const selectedVillage = this.value;
+            
+            if (selectedVillage) {
+                const location = allLocations.find(loc => 
+                    loc.province === selectedProvince && 
+                    loc.district === selectedDistrict && 
+                    loc.sector === selectedSector &&
+                    loc.cell === selectedCell &&
+                    loc.village === selectedVillage
+                );
+                selectedLocationId = location ? location.id : null;
+                console.log('Selected location ID:', selectedLocationId);
+            } else {
+                selectedLocationId = null;
+            }
+        });
+        
+        // Toggle between login and signup
+        document.getElementById('show-signup').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('signup-section').classList.remove('hidden');
+        });
+        
+        document.getElementById('show-login').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+        });
+        
+        // Role toggle
+        document.querySelectorAll('.role-toggle .toggle-option').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.role-toggle .toggle-option').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedRole = this.dataset.role;
+                
+                if (selectedRole === 'DOCTOR') {
+                    document.getElementById('doctor-fields').classList.remove('hidden');
+                } else {
+                    document.getElementById('doctor-fields').classList.add('hidden');
+                }
+            });
+        });
+        
+        // Password visibility toggle
+        document.getElementById('toggle-login-password').addEventListener('click', function() {
+            const input = document.getElementById('login-password');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+        
+        document.getElementById('toggle-signup-password').addEventListener('click', function() {
+            const input = document.getElementById('signup-password');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+        
+        // Login form submit
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            showLoading();
+            
+            try {
+                const response = await api.login(email, password);
+                hideLoading();
+                
+                if (response.token) {
+                    showNotification('success', 'Welcome back!', 'Redirecting to your dashboard...');
+                    
+                    setTimeout(() => {
+                        const role = response.role;
+                        if (role === 'ADMIN') {
+                            window.location.href = 'admin-dashboard.html';
+                        } else if (role === 'DOCTOR') {
+                            window.location.href = 'doctor-dashboard.html';
+                        } else {
+                            window.location.href = 'patient-dashboard.html';
+                        }
+                    }, 1000);
+                } else {
+                    showNotification('error', 'Login Failed', response.message || 'Invalid credentials');
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Login failed. Please try again.');
+            }
+        });
+        
+        // Signup form submit
+        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validate location selection
+            if (!selectedLocationId) {
+                showNotification('error', 'Location Required', 'Please select your complete location (down to village).');
+                return;
+            }
+            
+            const userData = {
+                name: document.getElementById('signup-name').value,
+                email: document.getElementById('signup-email').value,
+                phone: document.getElementById('signup-phone').value,
+                password: document.getElementById('signup-password').value,
+                role: selectedRole,
+                locationId: selectedLocationId
+            };
+            
+            // Additional doctor fields
+            if (selectedRole === 'DOCTOR') {
+                userData.specialty = document.getElementById('signup-specialization').value;
+                userData.experienceYears = parseInt(document.getElementById('signup-experience').value) || 0;
+                userData.hospitalName = document.getElementById('signup-hospital').value;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await api.register(userData);
+                hideLoading();
+                
+                if (response.token || response.userId) {
+                    showNotification('success', 'Account Created!', 'Please login with your credentials.');
+                    
+                    setTimeout(() => {
+                        document.getElementById('show-login').click();
+                    }, 1500);
+                } else {
+                    showNotification('error', 'Registration Failed', response.message || 'Could not create account');
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Registration failed. Please try again.');
+            }
+        });
+        
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load locations for registration
+            loadLocations();
+            
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('userRole');
+            
+            if (token && role) {
+                if (role === 'ADMIN') {
+                    window.location.href = 'admin-dashboard.html';
+                } else if (role === 'DOCTOR') {
+                    window.location.href = 'doctor-dashboard.html';
+                } else {
+                    window.location.href = 'patient-dashboard.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
