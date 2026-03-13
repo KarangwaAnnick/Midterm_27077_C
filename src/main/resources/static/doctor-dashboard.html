@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecBooking - Doctor Portal</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Page-specific styles -->
+    <style>
+        /* Page section handling */
+        .page-section { display: block; }
+        .page-section[style*="display: none"] { display: none !important; }
+        
+        /* Tabs for schedule modal */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 0.5rem;
+        }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Day selector checkboxes */
+        .day-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .day-checkbox:hover {
+            border-color: var(--primary);
+        }
+        .day-checkbox input:checked + span,
+        .day-checkbox:has(input:checked) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .day-checkbox input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+        
+        /* Calendar styles */
+        .calendar-week {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border-light);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .calendar-header {
+            background: var(--bg-light);
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .calendar-time {
+            background: var(--bg-surface);
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+        .calendar-cell {
+            background: var(--bg-surface);
+            min-height: 40px;
+            position: relative;
+        }
+        .calendar-slot {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: var(--radius-sm);
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-slot.available {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        .calendar-slot.booked {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+        .calendar-slot:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Month view */
+        .calendar-month {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border-light);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .calendar-day {
+            background: var(--bg-surface);
+            min-height: 100px;
+            padding: 0.5rem;
+        }
+        .calendar-day.other-month {
+            background: var(--bg-light);
+            color: var(--text-muted);
+        }
+        .calendar-day.today {
+            background: rgba(13, 148, 136, 0.05);
+        }
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .day-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .slot-indicator {
+            font-size: 0.7rem;
+            padding: 0.125rem 0.25rem;
+            border-radius: var(--radius-sm);
+        }
+        .slot-indicator.available {
+            background: var(--success);
+            color: white;
+        }
+        .slot-indicator.booked {
+            background: var(--warning);
+            color: white;
+        }
+        
+        /* Alert box */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+        }
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--info);
+            color: var(--info);
+        }
+        .alert .material-symbols-outlined {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        /* Calendar view buttons */
+        .calendar-view-btn {
+            min-width: 80px;
+        }
+        .calendar-view-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Notifications dropdown */
+        .notifications-wrapper {
+            position: relative;
+        }
+        .notifications-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 360px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: none;
+            max-height: 400px;
+            overflow: hidden;
+        }
+        .notifications-dropdown.active {
+            display: block;
+        }
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .notif-header h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .notif-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .notif-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notif-item:hover {
+            background: var(--bg-light);
+        }
+        .notif-item.unread {
+            background: rgba(13, 148, 136, 0.05);
+        }
+        .notif-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notif-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .notif-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .notif-icon.info { background: rgba(59, 130, 246, 0.1); color: var(--info); }
+        .notif-icon.error { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .notif-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .notif-title {
+            font-weight: 500;
+            font-size: 0.875rem;
+            margin-bottom: 0.125rem;
+        }
+        .notif-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notif-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .notif-empty {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .notif-empty .material-symbols-outlined {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Portal Wrapper -->
+    <div class="portal-wrapper">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon">
+                        <span class="material-symbols-outlined">medical_services</span>
+                    </div>
+                    <div>
+                        <h1>SpecBooking</h1>
+                        <span class="subtitle">Doctor Portal</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main Menu</div>
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="appointments">
+                        <span class="material-symbols-outlined">calendar_month</span>
+                        <span>Appointments</span>
+                        <span class="badge" id="appt-count">0</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="schedule">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <span>My Schedule</span>
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Patient Care</div>
+                    <a href="#" class="nav-item" data-page="patients">
+                        <span class="material-symbols-outlined">groups</span>
+                        <span>My Patients</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="reports">
+                        <span class="material-symbols-outlined">description</span>
+                        <span>Medical Reports</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="avatar" id="user-avatar">
+                        <span id="user-initials">DR</span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-name">Dr. Smith</div>
+                        <div class="user-role" id="user-specialty">Specialist</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="header-btn" id="menu-toggle">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="header-breadcrumb">
+                        <a href="#">Home</a>
+                        <span class="separator">/</span>
+                        <span id="current-page-title">Dashboard</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <!-- header search removed per request -->
+                    <div class="notifications-wrapper">
+                        <button class="header-btn" id="notifications-btn">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="badge-dot" id="notif-badge" style="display: none;"></span>
+                        </button>
+                        <div class="notifications-dropdown" id="notifications-dropdown">
+                            <div class="notif-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-ghost btn-sm" onclick="clearNotifications()">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <div class="notif-empty">
+                                    <span class="material-symbols-outlined">notifications_off</span>
+                                    <p>No notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" id="logout-btn" onclick="logout()">
+                        <span class="material-symbols-outlined">logout</span>
+                        Logout
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                
+                <!-- DASHBOARD PAGE -->
+                <div id="page-dashboard" class="page-section">
+                    <!-- Page Header -->
+                    <div class="page-header">
+                        <h1>Welcome, Dr. <span id="welcome-name">Doctor</span>!</h1>
+                        <p>Here's an overview of your schedule and patients today.</p>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card animate-slideInUp">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--info);">
+                                    <span class="material-symbols-outlined">today</span>
+                                </div>
+                                <div class="stat-change positive">Today</div>
+                            </div>
+                            <div class="stat-value" id="stat-today">0</div>
+                            <div class="stat-label">Today's Appointments</div>
+                        </div>
+                        
+                        <div class="stat-card animate-slideInUp" style="animation-delay: 0.1s;">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                                    <span class="material-symbols-outlined">pending</span>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="stat-pending">0</div>
+                            <div class="stat-label">Pending Requests</div>
+                        </div>
+                        
+                        <div class="stat-card animate-slideInUp" style="animation-delay: 0.2s;">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="stat-completed">0</div>
+                            <div class="stat-label">Completed Today</div>
+                        </div>
+                        
+                        <div class="stat-card animate-slideInUp" style="animation-delay: 0.3s;">
+                            <div class="stat-header">
+                                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--accent);">
+                                    <span class="material-symbols-outlined">groups</span>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="stat-patients">0</div>
+                            <div class="stat-label">Total Patients</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions-grid">
+                                <div class="quick-action-card" onclick="openScheduleModal()">
+                                    <div class="icon-wrapper blue">
+                                        <span class="material-symbols-outlined">event</span>
+                                </div>
+                                <div>
+                                    <h4>Set Schedule</h4>
+                                    <p>Manage availability</p>
+                                </div>
+                            </div>
+                            <div class="quick-action-card" onclick="showPageContent('patients')">
+                                <div class="icon-wrapper purple">
+                                    <span class="material-symbols-outlined">groups</span>
+                                </div>
+                                <div>
+                                    <h4>View Patients</h4>
+                                    <p>Patient records</p>
+                                </div>
+                            </div>
+                            <div class="quick-action-card" onclick="openReportModal()">
+                                <div class="icon-wrapper green">
+                                    <span class="material-symbols-outlined">note_add</span>
+                                </div>
+                                <div>
+                                    <h4>Write Report</h4>
+                                    <p>Create medical report</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Two Column Layout -->
+                <div class="grid grid-cols-2 gap-6">
+                    
+                    <!-- Pending Requests -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Pending Requests</h3>
+                            <a href="#" class="text-primary text-sm font-semibold" onclick="showPageContent('appointments')">View All</a>
+                        </div>
+                        <div class="card-body" id="pending-list">
+                            <div class="empty-state">
+                                <div class="icon">
+                                    <span class="material-symbols-outlined">inbox</span>
+                                </div>
+                                <h3>No Pending Requests</h3>
+                                <p>All caught up! No appointment requests waiting.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Today's Schedule -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Today's Schedule</h3>
+                            <span class="badge badge-info" id="today-date"></span>
+                        </div>
+                        <div class="card-body" id="today-schedule">
+                            <div class="empty-state">
+                                <div class="icon">
+                                    <span class="material-symbols-outlined">event_available</span>
+                                </div>
+                                <h3>No Appointments Today</h3>
+                                <p>Your schedule is clear for today.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                </div><!-- End page-dashboard -->
+                
+                <!-- APPOINTMENTS PAGE -->
+                <div id="page-appointments" class="page-section" style="display: none;">
+                    <div class="page-header">
+                        <h1>All Appointments</h1>
+                        <p>View and manage all your appointments</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Appointments</h3>
+                            <span class="badge badge-primary" id="appt-total-count">0</span>
+                        </div>
+                        <div class="card-body" id="appointments-list">
+                            <div class="empty-state">
+                                <div class="icon"><span class="material-symbols-outlined">event_busy</span></div>
+                                <h3>No Appointments</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- End page-appointments -->
+                
+                <!-- PATIENTS PAGE -->
+                <div id="page-patients" class="page-section" style="display: none;">
+                    <div class="page-header">
+                        <h1>My Patients</h1>
+                        <p>Patients who have booked appointments with you</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Patients</h3>
+                            <span class="badge badge-primary" id="patients-total-count">0</span>
+                        </div>
+                        <div class="card-body" id="patients-list">
+                            <div class="empty-state">
+                                <div class="icon"><span class="material-symbols-outlined">groups</span></div>
+                                <h3>No Patients</h3>
+                                <p>Patients will appear here when they book appointments.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- End page-patients -->
+                
+                <!-- SCHEDULE PAGE (Calendar View) -->
+                <div id="page-schedule" class="page-section" style="display: none;">
+                    <div class="page-header">
+                        <h1>My Schedule</h1>
+                        <p>View and manage your availability calendar</p>
+                        <div class="page-header-actions">
+                            <button class="btn btn-primary" onclick="openScheduleModal()">
+                                <span class="material-symbols-outlined">add</span>
+                                Set Availability
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Calendar Controls -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-2">
+                                    <button class="btn btn-secondary" onclick="navigateCalendar(-1)">
+                                        <span class="material-symbols-outlined">chevron_left</span>
+                                    </button>
+                                    <span class="font-semibold text-lg" id="calendar-title">January 2024</span>
+                                    <button class="btn btn-secondary" onclick="navigateCalendar(1)">
+                                        <span class="material-symbols-outlined">chevron_right</span>
+                                    </button>
+                                    <button class="btn btn-ghost" onclick="goToToday()">Today</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="btn btn-secondary calendar-view-btn active" data-view="week" onclick="setCalendarView('week')">Week</button>
+                                    <button class="btn btn-secondary calendar-view-btn" data-view="month" onclick="setCalendarView('month')">Month</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calendar Grid -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="calendar-container"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Legend -->
+                    <div class="flex items-center gap-4 mt-4">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-success">Available</span>
+                            <span class="text-muted text-sm">Open slots</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-warning">Booked</span>
+                            <span class="text-muted text-sm">Confirmed appointments</span>
+                        </div>
+                    </div>
+                </div><!-- End page-schedule -->
+                
+            </main>
+        </div>
+    </div>
+    
+    <!-- Schedule Modal (Enhanced with Recurring Options) -->
+    <div class="modal-backdrop" id="schedule-modal-backdrop"></div>
+    <div class="modal modal-lg" id="schedule-modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Set Availability</h3>
+            <button class="modal-close" onclick="closeScheduleModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Schedule Type Tabs -->
+            <div class="tabs mb-4">
+                <button class="tab-btn active" data-tab="single" onclick="switchScheduleTab('single')">Single Date</button>
+                <button class="tab-btn" data-tab="recurring" onclick="switchScheduleTab('recurring')">Recurring Weekly</button>
+            </div>
+            
+            <!-- Single Date Form -->
+            <form id="schedule-form-single" class="schedule-tab-content">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="schedule-date" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" class="form-input" id="schedule-start" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input type="time" class="form-input" id="schedule-end" value="17:00" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Duration (minutes)</label>
+                    <select class="form-select" id="schedule-duration-single">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                    </select>
+                </div>
+            </form>
+            
+            <!-- Recurring Schedule Form -->
+            <form id="schedule-form-recurring" class="schedule-tab-content" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Days of the Week</label>
+                    <div class="day-selector">
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="MONDAY"> Mon
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="TUESDAY"> Tue
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="WEDNESDAY"> Wed
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="THURSDAY"> Thu
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="FRIDAY"> Fri
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="SATURDAY"> Sat
+                        </label>
+                        <label class="day-checkbox">
+                            <input type="checkbox" name="day" value="SUNDAY"> Sun
+                        </label>
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="selectWeekdays()">Mon-Fri</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="selectAllDays()">All Days</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="clearDays()">Clear</button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-input" id="recurring-from" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-input" id="recurring-to" required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" class="form-input" id="recurring-start" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input type="time" class="form-input" id="recurring-end" value="17:00" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Session Duration (minutes)</label>
+                    <select class="form-select" id="schedule-duration-recurring">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                    </select>
+                    <p class="text-muted text-sm mt-1">Slots will be created with this duration between start and end time</p>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <span class="material-symbols-outlined">info</span>
+                    <div>
+                        <strong>Example:</strong> Selecting Mon-Fri from 9:00 to 17:00 with 30-minute sessions will create 16 appointment slots per day for all working days in the date range.
+                    </div>
+                </div>
+            </form>
+            
+            <div class="mt-4" style="border-top: 1px solid var(--border-light); padding-top: var(--space-4);">
+                <h4 class="mb-2">Upcoming Schedule</h4>
+                <div id="schedule-list" class="text-muted" style="max-height: 200px; overflow-y: auto;">Loading...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeScheduleModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitSchedule()">
+                <span class="material-symbols-outlined">check</span>
+                Save Schedule
+            </button>
+        </div>
+    </div>
+    
+    <!-- Report Modal -->
+    <div class="modal-backdrop" id="report-modal-backdrop"></div>
+    <div class="modal modal-lg" id="report-modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Write Medical Report</h3>
+            <button class="modal-close" onclick="closeReportModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="report-form">
+                <div class="form-group">
+                    <label class="form-label">Select Appointment</label>
+                    <select class="form-select" id="report-appointment" required>
+                        <option value="">Choose appointment...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Diagnosis</label>
+                <div class="form-group">
+                    <label class="form-label">Diagnosis</label>
+                    <textarea class="form-input" id="report-diagnosis" rows="3" placeholder="Primary diagnosis and findings..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prescription</label>
+                    <textarea class="form-input" id="report-prescription" rows="3" placeholder="Prescribed medications and dosage..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Follow-up Date</label>
+                    <input type="date" class="form-input" id="report-followup">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Remarks</label>
+                    <textarea class="form-input" id="report-remarks" rows="2" placeholder="Any additional observations..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitReport()">
+                <span class="material-symbols-outlined">check</span>
+                Save Report
+            </button>
+        </div>
+    </div>
+    
+    <!-- API Script -->
+    <script src="js/api.js"></script>
+    
+    <!-- Page Script -->
+    <script>
+        let appointments = [];
+        let schedules = [];
+        let doctorId = null;
+        let doctorInfo = null;
+        
+        // Check auth on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!requireAuth()) return;
+            if (!requireRole(['DOCTOR'])) return;
+            
+            initDashboard();
+        });
+        
+        // Initialize Dashboard
+        async function initDashboard() {
+            const user = api.getCurrentUser();
+            doctorId = localStorage.getItem('doctorId');
+            
+            // Update user info
+            const initials = getInitials(user.name);
+            document.getElementById('user-initials').textContent = initials;
+            document.getElementById('user-name').textContent = `Dr. ${user.name}`;
+            document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
+            
+            // Set today's date
+            const today = new Date();
+            document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            // Set min date for schedule inputs
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('schedule-date').min = todayStr;
+            document.getElementById('recurring-from').min = todayStr;
+            document.getElementById('recurring-to').min = todayStr;
+            
+            // Load notifications
+            loadNotifications();
+            
+            // Load doctor info
+            await loadDoctorInfo();
+            
+            // Load appointments
+            await loadAppointments();
+            
+            // Load schedules
+            await loadSchedules();
+            
+            // Welcome notification
+            setTimeout(() => {
+                addNotification('info', 'Welcome!', 'Your doctor dashboard is ready.');
+            }, 1000);
+        }
+        
+        // Load Doctor Info
+        async function loadDoctorInfo() {
+            try {
+                if (doctorId) {
+                    doctorInfo = await api.getDoctor(doctorId);
+                    
+                    if (doctorInfo) {
+                        document.getElementById('user-specialty').textContent = doctorInfo.specialty || 'Specialist';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading doctor info:', error);
+            }
+        }
+        
+        // Load Schedules
+        async function loadSchedules() {
+            try {
+                if (doctorId) {
+                    schedules = await api.getDoctorSchedules(doctorId);
+                    renderScheduleList();
+                }
+            } catch (error) {
+                console.error('Error loading schedules:', error);
+            }
+        }
+        
+        // Render Schedule List
+        function renderScheduleList() {
+            const container = document.getElementById('schedule-list');
+            const futureSchedules = schedules.filter(s => new Date(s.date) >= new Date());
+            
+            if (futureSchedules.length === 0) {
+                container.innerHTML = '<p class="text-muted">No upcoming schedule slots</p>';
+                return;
+            }
+            
+            container.innerHTML = futureSchedules.slice(0, 5).map(s => `
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span>${formatDate(s.date)} - ${formatTime(s.startTime)} to ${formatTime(s.endTime)}</span>
+                    <span class="badge ${s.isBooked ? 'badge-warning' : 'badge-success'}">${s.isBooked ? 'Booked' : 'Available'}</span>
+                    ${!s.isBooked ? `<button class="btn btn-ghost btn-icon" onclick="deleteSchedule(${s.id})"><span class="material-symbols-outlined text-error">delete</span></button>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Delete Schedule
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('Delete this schedule slot?')) return;
+            
+            showLoading();
+            try {
+                await api.deleteSchedule(scheduleId);
+                hideLoading();
+                showNotification('success', 'Deleted', 'Schedule slot removed.');
+                await loadSchedules();
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Could not delete schedule.');
+            }
+        }
+        
+        // Load Appointments
+        async function loadAppointments() {
+            try {
+                if (!doctorId) return;
+                
+                appointments = await api.getDoctorAppointments(doctorId);
+                
+                // Today's date
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Calculate stats
+                const todayAppts = appointments.filter(apt => apt.schedule?.date === today);
+                const pending = appointments.filter(apt => apt.status === 'PENDING');
+                const completed = appointments.filter(apt => apt.status === 'COMPLETED');
+                const confirmed = appointments.filter(apt => apt.status === 'CONFIRMED');
+                
+                // Get unique patients with CONFIRMED appointments (current or past)
+                const confirmedPatientIds = new Set(
+                    appointments
+                        .filter(apt => apt.status === 'CONFIRMED' || apt.status === 'COMPLETED')
+                        .map(apt => apt.user?.id)
+                        .filter(Boolean)
+                );
+                
+                document.getElementById('stat-today').textContent = todayAppts.length;
+                document.getElementById('stat-pending').textContent = pending.length;
+                document.getElementById('stat-completed').textContent = completed.length;
+                document.getElementById('stat-patients').textContent = confirmedPatientIds.size;
+                // Show only confirmed/upcoming appointments in the sidebar badge
+                try {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayDate = new Date(todayStr);
+                    const upcomingConfirmed = appointments.filter(apt => {
+                        const schedDate = apt.schedule && apt.schedule.date ? new Date(apt.schedule.date) : null;
+                        if (!schedDate) return false;
+                        return apt.status === 'CONFIRMED' && schedDate >= todayDate;
+                    });
+                    document.getElementById('appt-count').textContent = upcomingConfirmed.length;
+                } catch (e) {
+                    document.getElementById('appt-count').textContent = appointments.length;
+                }
+                
+                // Render lists
+                renderPendingRequests(pending);
+                renderTodaySchedule(todayAppts);
+                
+                // Populate report dropdown with confirmed appointments
+                populateReportDropdown(confirmed);
+                
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+            }
+        }
+        
+        // Render Pending Requests
+        function renderPendingRequests(pending) {
+            const container = document.getElementById('pending-list');
+            
+            if (pending.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">
+                            <span class="material-symbols-outlined">inbox</span>
+                        </div>
+                        <h3>No Pending Requests</h3>
+                        <p>All caught up! No appointment requests waiting.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = pending.slice(0, 4).map(apt => {
+                const patient = apt.user || {};
+                const schedule = apt.schedule || {};
+                return `
+                    <div class="request-card">
+                        <div class="patient-info">
+                            <div class="patient-avatar">${getInitials(patient.name || 'Patient')}</div>
+                            <div class="flex-1">
+                                <div class="font-semibold">${patient.name || 'Unknown Patient'}</div>
+                                <div class="text-muted text-sm">${apt.notes || 'Consultation'}</div>
+                            </div>
+                        </div>
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <span class="material-symbols-outlined">calendar_today</span>
+                                <span>${schedule.date ? formatDate(schedule.date) : 'TBD'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="material-symbols-outlined">schedule</span>
+                                <span>${schedule.startTime ? formatTime(schedule.startTime) : 'TBD'}</span>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-success btn-sm" onclick="handleAppointment(${apt.id}, 'CONFIRMED')">
+                                <span class="material-symbols-outlined">check</span>
+                                Accept
+                            </button>
+                            <button class="btn btn-error btn-sm" onclick="handleAppointment(${apt.id}, 'CANCELLED')">
+                                <span class="material-symbols-outlined">close</span>
+                                Decline
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Render Today's Schedule
+        function renderTodaySchedule(todayAppts) {
+            const container = document.getElementById('today-schedule');
+            
+            if (todayAppts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">
+                            <span class="material-symbols-outlined">event_available</span>
+                        </div>
+                        <h3>No Appointments Today</h3>
+                        <p>Your schedule is clear for today.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by time
+            todayAppts.sort((a, b) => (a.schedule?.startTime || '').localeCompare(b.schedule?.startTime || ''));
+            
+            container.innerHTML = `
+                <div class="timeline">
+                    ${todayAppts.map(apt => {
+                        const patient = apt.user || {};
+                        const schedule = apt.schedule || {};
+                        const statusClass = apt.status === 'COMPLETED' ? 'completed' : 
+                                           apt.status === 'CANCELLED' ? 'cancelled' : '';
+                        return `
+                            <div class="timeline-item ${statusClass}">
+                                <div class="timeline-time">${schedule.startTime ? formatTime(schedule.startTime) : 'TBD'}</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">${patient.name || 'Patient'}</div>
+                                    <div class="timeline-desc">${apt.notes || 'Consultation'}</div>
+                                </div>
+                                ${apt.status === 'CONFIRMED' ? `<button class="btn btn-success btn-sm" onclick="completeAppointment(${apt.id})">Complete</button>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        // Populate Report Dropdown
+        function populateReportDropdown(appts) {
+            const select = document.getElementById('report-appointment');
+            select.innerHTML = '<option value="">Choose appointment...</option>';
+            
+            appts.forEach(apt => {
+                const patient = apt.user || {};
+                const schedule = apt.schedule || {};
+                const option = document.createElement('option');
+                option.value = apt.id;
+                option.textContent = `${patient.name || 'Patient'} - ${schedule.date ? formatDate(schedule.date) : 'N/A'}`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Handle Appointment (Accept/Decline)
+        async function handleAppointment(appointmentId, status) {
+            showLoading();
+            
+            try {
+                // Find the appointment to get patient info
+                const apt = appointments.find(a => a.id === appointmentId);
+                const patientName = apt?.user?.name || 'Patient';
+                
+                await api.updateAppointmentStatus(appointmentId, status);
+                hideLoading();
+                
+                if (status === 'CONFIRMED') {
+                    showNotification('success', 'Accepted', `Appointment with ${patientName} confirmed.`);
+                    addNotification('success', 'Appointment Confirmed', `You confirmed an appointment with ${patientName}.`);
+                } else {
+                    showNotification('info', 'Declined', `Appointment with ${patientName} declined.`);
+                    addNotification('warning', 'Appointment Declined', `You declined an appointment with ${patientName}.`);
+                }
+                await loadAppointments();
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Could not update appointment.');
+            }
+        }
+        
+        // Complete Appointment
+        async function completeAppointment(appointmentId) {
+            showLoading();
+            
+            try {
+                // Find the appointment to get patient info
+                const apt = appointments.find(a => a.id === appointmentId);
+                const patientName = apt?.user?.name || 'Patient';
+                
+                await api.updateAppointmentStatus(appointmentId, 'COMPLETED');
+                hideLoading();
+                showNotification('success', 'Completed', 'Appointment marked as completed.');
+                addNotification('success', 'Appointment Completed', `Session with ${patientName} completed successfully.`);
+                await loadAppointments();
+                
+                // Open report modal for this appointment
+                document.getElementById('report-appointment').value = appointmentId;
+                openReportModal();
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Could not complete appointment.');
+            }
+        }
+        
+        // Open Schedule Modal
+        function openScheduleModal() {
+            document.getElementById('schedule-modal-backdrop').classList.add('active');
+            document.getElementById('schedule-modal').classList.add('active');
+        }
+        
+        // Close Schedule Modal
+        function closeScheduleModal() {
+            document.getElementById('schedule-modal-backdrop').classList.remove('active');
+            document.getElementById('schedule-modal').classList.remove('active');
+            // Reset both forms
+            document.getElementById('schedule-form-single').reset();
+            document.getElementById('schedule-form-recurring').reset();
+            clearDays();
+        }
+        
+        // Submit Schedule - handles both single and recurring
+        async function submitSchedule() {
+            showLoading();
+            
+            try {
+                if (scheduleMode === 'single') {
+                    // Single date schedule
+                    const date = document.getElementById('schedule-date').value;
+                    const startTime = document.getElementById('schedule-start').value;
+                    const endTime = document.getElementById('schedule-end').value;
+                    const duration = parseInt(document.getElementById('schedule-duration-single').value);
+                    
+                    if (!date || !startTime || !endTime) {
+                        hideLoading();
+                        showNotification('error', 'Missing Information', 'Please fill in all fields.');
+                        return;
+                    }
+                    
+                    // Use bulk endpoint with manual schedule for single date with slots
+                    const bulkData = {
+                        doctorId: parseInt(doctorId),
+                        slotDurationMinutes: duration,
+                        manualSchedules: [{
+                            date: date,
+                            startTime: startTime,
+                            endTime: endTime
+                        }]
+                    };
+                    
+                    const response = await api.createBulkSchedules(bulkData);
+                    hideLoading();
+                    
+                    const count = response.length || 1;
+                    showNotification('success', 'Schedule Saved', `Created ${count} time slot(s) for ${formatDate(date)}.`);
+                    closeScheduleModal();
+                    await loadSchedules();
+                    if (currentPage === 'schedule') renderCalendar();
+                } else {
+                    // Recurring schedule
+                    const selectedDays = Array.from(document.querySelectorAll('input[name="day"]:checked')).map(cb => cb.value);
+                    const fromDate = document.getElementById('recurring-from').value;
+                    const toDate = document.getElementById('recurring-to').value;
+                    const startTime = document.getElementById('recurring-start').value;
+                    const endTime = document.getElementById('recurring-end').value;
+                    const duration = parseInt(document.getElementById('schedule-duration-recurring').value);
+                    
+                    if (selectedDays.length === 0) {
+                        hideLoading();
+                        showNotification('error', 'Missing Information', 'Please select at least one day of the week.');
+                        return;
+                    }
+                    
+                    if (!fromDate || !toDate || !startTime || !endTime) {
+                        hideLoading();
+                        showNotification('error', 'Missing Information', 'Please fill in all fields.');
+                        return;
+                    }
+                    
+                    const bulkData = {
+                        doctorId: parseInt(doctorId),
+                        slotDurationMinutes: duration,
+                        recurringPattern: {
+                            daysOfWeek: selectedDays,
+                            startTime: startTime,
+                            endTime: endTime,
+                            fromDate: fromDate,
+                            toDate: toDate
+                        }
+                    };
+                    
+                    const response = await api.createBulkSchedules(bulkData);
+                    hideLoading();
+                    
+                    const count = response.length || 0;
+                    showNotification('success', 'Schedule Saved', `Created ${count} time slot(s) for the selected period.`);
+                    closeScheduleModal();
+                    await loadSchedules();
+                    if (currentPage === 'schedule') renderCalendar();
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Could not save schedule.');
+            }
+        }
+        
+        // Open Report Modal
+        function openReportModal() {
+            document.getElementById('report-modal-backdrop').classList.add('active');
+            document.getElementById('report-modal').classList.add('active');
+        }
+        
+        // Close Report Modal
+        function closeReportModal() {
+            document.getElementById('report-modal-backdrop').classList.remove('active');
+            document.getElementById('report-modal').classList.remove('active');
+            document.getElementById('report-form').reset();
+        }
+        
+        // Submit Report
+        async function submitReport() {
+            const appointmentId = document.getElementById('report-appointment').value;
+            const diagnosis = document.getElementById('report-diagnosis').value;
+            const prescription = document.getElementById('report-prescription').value;
+            const followUpDate = document.getElementById('report-followup').value;
+            const remarks = document.getElementById('report-remarks').value;
+            
+            if (!appointmentId || !diagnosis) {
+                showNotification('error', 'Missing Information', 'Please select an appointment and enter diagnosis.');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const reportData = {
+                    diagnosis: diagnosis,
+                    prescription: prescription,
+                    followUpDate: followUpDate || null,
+                    remarks: remarks
+                };
+                
+                const response = await api.createAppointmentReport(appointmentId, reportData);
+                hideLoading();
+                
+                if (response.id) {
+                    closeReportModal();
+                    showNotification('success', 'Report Saved', 'Medical report has been created.');
+                    await loadAppointments();
+                } else {
+                    showNotification('error', 'Error', response.message || 'Could not save report.');
+                }
+            } catch (error) {
+                hideLoading();
+                showNotification('error', 'Error', error.message || 'Could not save report.');
+            }
+        }
+        
+        // Logout
+        function logout() {
+            api.logout();
+        }
+        
+        // ============= NOTIFICATIONS SYSTEM =============
+        let notifications = [];
+        
+        function loadNotifications() {
+            const stored = localStorage.getItem('doctor_notifications');
+            notifications = stored ? JSON.parse(stored) : [];
+            renderNotifications();
+        }
+        
+        function saveNotifications() {
+            localStorage.setItem('doctor_notifications', JSON.stringify(notifications));
+        }
+        
+        function addNotification(type, title, message) {
+            const notif = {
+                id: Date.now(),
+                type: type, // success, warning, info, error
+                title: title,
+                message: message,
+                time: new Date().toISOString(),
+                read: false
+            };
+            notifications.unshift(notif);
+            if (notifications.length > 50) notifications.pop(); // Keep max 50
+            saveNotifications();
+            renderNotifications();
+        }
+        
+        function renderNotifications() {
+            const list = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            badge.style.display = unreadCount > 0 ? 'block' : 'none';
+            
+            if (notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="notif-empty">
+                        <span class="material-symbols-outlined">notifications_off</span>
+                        <p>No notifications</p>
+                    </div>`;
+                return;
+            }
+            
+            list.innerHTML = notifications.slice(0, 20).map(n => {
+                const icon = n.type === 'success' ? 'check_circle' : 
+                             n.type === 'warning' ? 'warning' : 
+                             n.type === 'error' ? 'error' : 'info';
+                const timeAgo = getTimeAgo(n.time);
+                return `
+                    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markNotifRead(${n.id})">
+                        <div class="notif-icon ${n.type}">
+                            <span class="material-symbols-outlined">${icon}</span>
+                        </div>
+                        <div class="notif-content">
+                            <div class="notif-title">${n.title}</div>
+                            <div class="notif-desc">${n.message}</div>
+                            <div class="notif-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function markNotifRead(id) {
+            const notif = notifications.find(n => n.id === id);
+            if (notif) {
+                notif.read = true;
+                saveNotifications();
+                renderNotifications();
+            }
+        }
+        
+        function clearNotifications() {
+            notifications = [];
+            saveNotifications();
+            renderNotifications();
+        }
+        
+        function getTimeAgo(dateStr) {
+            const now = new Date();
+            const date = new Date(dateStr);
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+        
+        // Toggle notifications dropdown
+        document.getElementById('notifications-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notifications-dropdown');
+            dropdown.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notifications-dropdown');
+            if (!e.target.closest('.notifications-wrapper')) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // Show page content (navigation) - FIXED: Use show/hide instead of innerHTML replacement
+        let currentPage = 'dashboard';
+        
+        function showPageContent(page) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === page) {
+                    item.classList.add('active');
+                }
+            });
+            
+            document.getElementById('current-page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+            
+            // Handle modal page (reports)
+            if (page === 'reports') {
+                openReportModal();
+                return;
+            }
+            
+            // Hide all page sections
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show the requested page section
+            const pageSection = document.getElementById('page-' + page);
+            if (pageSection) {
+                pageSection.style.display = 'block';
+                currentPage = page;
+            }
+            
+            // Page-specific actions
+            if (page === 'dashboard') {
+                loadAppointments();
+            } else if (page === 'appointments') {
+                renderAppointmentsPage();
+            } else if (page === 'patients') {
+                renderPatientsPage();
+            } else if (page === 'schedule') {
+                renderCalendar();
+            }
+        }
+        
+        // Render appointments into the appointments page
+        function renderAppointmentsPage() {
+            const container = document.getElementById('appointments-list');
+            document.getElementById('appt-total-count').textContent = appointments.length;
+            
+            if (appointments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon"><span class="material-symbols-outlined">event_busy</span></div>
+                        <h3>No Appointments</h3>
+                    </div>`;
+                return;
+            }
+            
+            let html = `<div class="table-wrapper"><table class="table"><thead><tr><th>Patient</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+            appointments.forEach(apt => {
+                const patient = apt.user || {};
+                const schedule = apt.schedule || {};
+                const statusClass = getStatusBadgeClass(apt.status);
+                html += `
+                    <tr>
+                        <td>${patient.name || 'Unknown'}</td>
+                        <td>${schedule.date ? formatDate(schedule.date) : 'TBD'} at ${schedule.startTime ? formatTime(schedule.startTime) : 'TBD'}</td>
+                        <td><span class="badge ${statusClass}">${apt.status}</span></td>
+                        <td>
+                            ${apt.status === 'PENDING' ? `<button class="btn btn-success btn-sm" onclick="handleAppointment(${apt.id}, 'CONFIRMED')">Accept</button> <button class="btn btn-error btn-sm" onclick="handleAppointment(${apt.id}, 'CANCELLED')">Decline</button>` : ''}
+                            ${apt.status === 'CONFIRMED' ? `<button class="btn btn-primary btn-sm" onclick="completeAppointment(${apt.id})">Complete</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+        
+        // Render patients into the patients page
+        function renderPatientsPage() {
+            const container = document.getElementById('patients-list');
+            const uniquePatients = [];
+            const seenIds = new Set();
+            
+            appointments.forEach(apt => {
+                if (apt.user && !seenIds.has(apt.user.id)) {
+                    seenIds.add(apt.user.id);
+                    uniquePatients.push(apt.user);
+                }
+            });
+            
+            document.getElementById('patients-total-count').textContent = uniquePatients.length;
+            
+            if (uniquePatients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon"><span class="material-symbols-outlined">groups</span></div>
+                        <h3>No Patients</h3>
+                        <p>Patients will appear here when they book appointments.</p>
+                    </div>`;
+                return;
+            }
+            
+            let html = `<div class="grid grid-cols-2 gap-4">`;
+            uniquePatients.forEach(patient => {
+                const patientAppts = appointments.filter(a => a.user?.id === patient.id);
+                html += `
+                    <div class="card">
+                        <div class="card-body flex items-center gap-4">
+                            <div class="avatar avatar-lg">${getInitials(patient.name)}</div>
+                            <div class="flex-1">
+                                <h4>${patient.name}</h4>
+                                <p class="text-muted text-sm">${patient.email || ''}</p>
+                                <p class="text-muted text-xs">${patientAppts.length} appointments</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        // ============= CALENDAR FUNCTIONALITY =============
+        let calendarView = 'week';
+        let calendarDate = new Date();
+        
+        function setCalendarView(view) {
+            calendarView = view;
+            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+            renderCalendar();
+        }
+        
+        function navigateCalendar(direction) {
+            if (calendarView === 'week') {
+                calendarDate.setDate(calendarDate.getDate() + (direction * 7));
+            } else {
+                calendarDate.setMonth(calendarDate.getMonth() + direction);
+            }
+            renderCalendar();
+        }
+        
+        function goToToday() {
+            calendarDate = new Date();
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            if (!container) return;
+            
+            const titleEl = document.getElementById('calendar-title');
+            
+            if (calendarView === 'week') {
+                renderWeekView(container, titleEl);
+            } else {
+                renderMonthView(container, titleEl);
+            }
+        }
+        
+        function renderWeekView(container, titleEl) {
+            // Get start of week (Monday)
+            const weekStart = new Date(calendarDate);
+            const day = weekStart.getDay();
+            const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+            weekStart.setDate(diff);
+            
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            // Update title
+            titleEl.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            
+            // Build time slots (9am to 6pm)
+            const timeSlots = [];
+            for (let h = 9; h <= 18; h++) {
+                timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
+            }
+            
+            // Build header
+            let html = `<div class="calendar-week">`;
+            html += `<div class="calendar-header"></div>`;
+            
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + i);
+                const isToday = d.toDateString() === new Date().toDateString();
+                html += `<div class="calendar-header" style="${isToday ? 'background: var(--primary); color: white;' : ''}">${days[i]} ${d.getDate()}</div>`;
+            }
+            
+            // Build grid
+            timeSlots.forEach(time => {
+                html += `<div class="calendar-time">${time}</div>`;
+                
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(weekStart);
+                    d.setDate(d.getDate() + i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    
+                    // Find slots for this time and date
+                    const daySlots = schedules.filter(s => 
+                        s.date === dateStr && 
+                        s.startTime && 
+                        s.startTime.startsWith(time.split(':')[0])
+                    );
+                    
+                    html += `<div class="calendar-cell">`;
+                    daySlots.forEach(slot => {
+                        const slotClass = slot.isBooked ? 'booked' : 'available';
+                        html += `<div class="calendar-slot ${slotClass}" onclick="handleSlotClick(${slot.id}, ${slot.isBooked})">${slot.startTime.substring(0,5)}</div>`;
+                    });
+                    html += `</div>`;
+                }
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        function renderMonthView(container, titleEl) {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            titleEl.textContent = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            // First day of month and total days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Monday start
+            
+            let html = `<div class="calendar-month">`;
+            
+            // Day headers
+            ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => {
+                html += `<div class="calendar-header">${d}</div>`;
+            });
+            
+            // Previous month days
+            const prevMonth = new Date(year, month, 0);
+            for (let i = startDay - 1; i >= 0; i--) {
+                html += `<div class="calendar-day other-month"><div class="day-number">${prevMonth.getDate() - i}</div></div>`;
+            }
+            
+            // Current month days
+            const today = new Date().toDateString();
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const currentDate = new Date(year, month, d);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const isToday = currentDate.toDateString() === today;
+                
+                // Get slots for this day
+                const daySlots = schedules.filter(s => s.date === dateStr);
+                const available = daySlots.filter(s => !s.isBooked).length;
+                const booked = daySlots.filter(s => s.isBooked).length;
+                
+                html += `<div class="calendar-day${isToday ? ' today' : ''}">`;
+                html += `<div class="day-number">${d}</div>`;
+                html += `<div class="day-slots">`;
+                if (available > 0) html += `<span class="slot-indicator available">${available} free</span>`;
+                if (booked > 0) html += `<span class="slot-indicator booked">${booked} booked</span>`;
+                html += `</div></div>`;
+            }
+            
+            // Next month days
+            const totalCells = startDay + lastDay.getDate();
+            const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        function handleSlotClick(slotId, isBooked) {
+            if (isBooked) {
+                showNotification('info', 'Slot Booked', 'This slot has an appointment.');
+            } else {
+                if (confirm('Delete this available slot?')) {
+                    deleteSchedule(slotId);
+                }
+            }
+        }
+        
+        // ============= SCHEDULE MODAL FUNCTIONALITY =============
+        let scheduleMode = 'single';
+        
+        function switchScheduleTab(mode) {
+            scheduleMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === mode);
+            });
+            document.getElementById('schedule-form-single').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('schedule-form-recurring').style.display = mode === 'recurring' ? 'block' : 'none';
+        }
+        
+        function selectWeekdays() {
+            document.querySelectorAll('input[name="day"]').forEach(cb => {
+                cb.checked = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].includes(cb.value);
+            });
+        }
+        
+        function selectAllDays() {
+            document.querySelectorAll('input[name="day"]').forEach(cb => {
+                cb.checked = true;
+            });
+        }
+        
+        function clearDays() {
+            document.querySelectorAll('input[name="day"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+        
+        // Sidebar navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPageContent(this.dataset.page);
+            });
+        });
+        
+        // Close modals on backdrop click
+        document.getElementById('schedule-modal-backdrop').addEventListener('click', closeScheduleModal);
+        document.getElementById('report-modal-backdrop').addEventListener('click', closeReportModal);
+        
+        // Mobile menu toggle
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+    </script>
+</body>
+</html>
